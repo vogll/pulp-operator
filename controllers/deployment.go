@@ -549,6 +549,13 @@ func signingMetadataVolumes(resources any, storageType []string, volumes []corev
 			item := corev1.KeyToPath{Key: settings.CollectionSigningScriptName, Path: settings.CollectionSigningScriptName}
 			secretItems = append(secretItems, item)
 		}
+
+		if DeployDebSign(*secret) {
+			item := corev1.KeyToPath{Key: settings.DebSigningScriptName, Path: settings.DebSigningScriptName}
+			secretItems = append(secretItems, item)
+		}
+
+
 		if DeployContainerSign(*secret) {
 			item := corev1.KeyToPath{Key: settings.ContainerSigningScriptName, Path: settings.ContainerSigningScriptName}
 			secretItems = append(secretItems, item)

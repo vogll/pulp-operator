@@ -15,6 +15,8 @@ const (
 	signingScriptJob            = "signing-metadata-"
 	ContainerSigningScriptName  = "container_script.sh"
 	CollectionSigningScriptName = "collection_script.sh"
+	DebSigningScriptName        = "sign_deb_release.sh"
+
 )
 
 func MigrationJob(pulpName string) string {

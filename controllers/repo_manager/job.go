@@ -363,6 +363,12 @@ func signingScriptContainer(pulp *repomanagerpulpprojectorgv1beta2.Pulp, scripts
 			ReadOnly:  true,
 		},
 		{
+			Name:      pulp.Name + "-signing-scripts",
+			MountPath: "/var/lib/pulp/scripts/" + settings.DebSigningScriptName,
+			SubPath:   settings.DebSigningScriptName,
+			ReadOnly:  true,
+		},
+		{
 			Name:      "gpg-keys",
 			MountPath: "/etc/pulp/keys/signing_service.gpg",
 			SubPath:   "signing_service.gpg",
@@ -398,8 +404,13 @@ echo "${PULP_SIGNING_KEY_FINGERPRINT}:6" | gpg --import-ownertrust
 	}
 	if controllers.DeployContainerSign(scriptsSecret) {
 		args[0] += "/usr/local/bin/pulpcore-manager remove-signing-service container-signing-service --class container:ManifestSigningService\n"
-		args[0] += "/usr/local/bin/pulpcore-manager add-signing-service container-signing-service /var/lib/pulp/scripts/" + settings.ContainerSigningScriptName + " " + fingerprint + " --class container:ManifestSigningService"
+		args[0] += "/usr/local/bin/pulpcore-manager add-signing-service  --class container:ManifestSigningService container-signing-service /var/lib/pulp/scripts/" + settings.ContainerSigningScriptName + " " + fingerprint + "\n"
 		envVars = append(envVars, corev1.EnvVar{Name: "CONTAINER_SIGNING_SERVICE", Value: "container-signing-service"})
+	}
+	if controllers.DeployDebSign(scriptsSecret) {
+		args[0] += "/usr/local/bin/pulpcore-manager remove-signing-service --class deb:AptReleaseSigningService deb-signing-service\n"
+		args[0] += "/usr/local/bin/pulpcore-manager add-signing-service --class deb:AptReleaseSigningService deb-signing-service /var/lib/pulp/scripts/" + settings.DebSigningScriptName + " " + fingerprint + "\n"
+		envVars = append(envVars, corev1.EnvVar{Name: "DEB_SIGNING_SERVICE", Value: "deb-signing-service"})
 	}
 
 	return corev1.Container{
@@ -422,6 +433,12 @@ func signingScriptJobVolumes(pulp *repomanagerpulpprojectorgv1beta2.Pulp, secret
 		item := corev1.KeyToPath{Key: settings.CollectionSigningScriptName, Path: settings.CollectionSigningScriptName}
 		secretItems = append(secretItems, item)
 	}
+
+	if controllers.DeployDebSign(secret) {
+		item := corev1.KeyToPath{Key: settings.DebSigningScriptName, Path: settings.DebSigningScriptName}
+		secretItems = append(secretItems, item)
+	}
+
 	if controllers.DeployContainerSign(secret) {
 		item := corev1.KeyToPath{Key: settings.ContainerSigningScriptName, Path: settings.ContainerSigningScriptName}
 		secretItems = append(secretItems, item)
